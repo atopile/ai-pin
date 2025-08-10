@@ -46,3 +46,7 @@ dependencies:
 - type: registry
   identifier: atopile/sd-card
   release: 0.1.6
+
+- type: file
+  identifier: atopile/logos
+  path: logos

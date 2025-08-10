@@ -15,6 +15,7 @@ from "atopile/microphones/tdk_invensense_ics_43434.ato" import TDK_InvenSense_IC
 from "atopile/ti-bq25185/ti-bq25185.ato" import BQ25185_driver
 from "atopile/sd-card/sd-card-slots.ato" import MicroSDCardAssemblyWithRemovableSPI
 from "atopile/batteries/eemb_battery_lp402535.ato" import EMB_BATTERY_LP402535_driver
+from "atopile/logos/logos.ato" import atopile_logo_4x4mm
 
 module AIPin:
     """
@@ -78,3 +79,5 @@ module AIPin:
         r.package = "0402"
     mcu.i2c.sda.reference.hv ~> i2c_pullups[0] ~> mcu.i2c.sda.line
     mcu.i2c.scl.reference.hv ~> i2c_pullups[1] ~> mcu.i2c.scl.line
+
+    logo = new atopile_logo_4x4mm
