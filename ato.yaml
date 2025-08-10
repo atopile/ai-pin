@@ -1,4 +1,4 @@
-requires-atopile: "0.11.1"
+requires-atopile: 0.11.1
 
 paths:
   src: ./
@@ -6,8 +6,9 @@ paths:
 
 builds:
   default:
-    entry: main.ato:App
-
+    entry: ai-pin.ato:AIPin
+    hide_designators: true
+    exclude_checks: [PCB.requires_drc_check]
 # This metadata is only required for publishing
 # Uncomment it and fill out the fields to publish your package
 # package:
@@ -20,3 +21,28 @@ builds:
 #   summary: # fill me!
 #   license: MIT license
 #   homepage: # fill me!
+dependencies:
+- type: registry
+  identifier: atopile/espressif-esp32-c3
+  release: 0.1.4
+- type: registry
+  identifier: atopile/microphones
+  release: 0.2.0
+- type: registry
+  identifier: atopile/usb-connectors
+  release: 0.3.0
+- type: registry
+  identifier: atopile/ti-bq25185
+  release: 0.1.0
+- type: registry
+  identifier: atopile/st-ldk220
+  release: 0.2.1
+- type: registry
+  identifier: atopile/buttons
+  release: 0.2.4
+- type: registry
+  identifier: atopile/batteries
+  release: 0.2.0
+- type: registry
+  identifier: atopile/sd-card
+  release: 0.1.6

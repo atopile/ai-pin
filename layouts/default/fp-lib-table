@@ -71,6 +71,13 @@
         (descr "atopile: part lib: YAGEO_RC0402FR_0718KL")
     )
     (lib
+        (name "YAGEO_RC0402FR_076K2L")
+        (type "KiCad")
+        (uri "${KIPRJMOD}/../../parts/YAGEO_RC0402FR_076K2L")
+        (options "")
+        (descr "atopile: part lib: YAGEO_RC0402FR_076K2L")
+    )
+    (lib
         (name "BHFUSE_BSMD0805_050_15V")
         (type "KiCad")
         (uri "${KIPRJMOD}/../../.ato/modules/atopile/usb-connectors/parts/BHFUSE_BSMD0805_050_15V")

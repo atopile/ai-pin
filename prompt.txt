@@ -4,4 +4,4 @@ Follow the conventions in @.cursor/rules/how_to_build_packages.mdc. Use the atop
 
 When you are done, inspect the overall project for logical errors, missed connections, or systems that would not function as intended.
 
-Start by making an in depth plan in a file called 'plan.md' by gathering all information necessary such as finding which packages to use, and wait for further instruction before starting to write ato code. Refer back to this document before implementing each part of the design.
+Start by making an in depth plan in a file called @plan.md by gathering all information necessary such as finding which packages to use, and wait for further instruction before starting to write ato code. Refer back to this document before implementing each part of the design.

@@ -34,12 +34,12 @@ module AIPin:
 
     # --- Battery ---
     battery = new EMB_BATTERY_LP402535_driver
-    battery.battery.model.capacity = 300mAh
-    assert battery.battery.model.voltage is 3V to 4.2V
+    battery.model.capacity = 300mAh
+    assert battery.model.voltage is 3V to 4.2V
 
     # --- Battery charger ---
     charger = new BQ25185_driver
-    charger.charge_current_limit = battery.battery.model.capacity / 2h +/- 10%
+    charger.charge_current_limit = battery.model.capacity / 2h +/- 10%
     charger.battery_voltage_limit_high = 4.2V
     charger.battery_voltage_limit_low = 3.0V
 
@@ -53,18 +53,21 @@ module AIPin:
     power_vbus_5v ~ usb_c.usb.usb_if.buspower
     power_vbus_5v ~ charger.power_vbus
 
-    power_batt ~ charger.power_batt
     battery.power ~ power_batt
+    power_batt ~ charger.power_batt
 
     charger.power_sys ~> ldo ~> power_3v3
 
-    # --- MCU power and direct bus hookups ---
     power_3v3 ~ mcu.power
+    power_3v3 ~ mic.power
+    power_3v3 ~ microsd.power
 
+
+    # --- Comms connections ---
     mcu.i2s ~ mic.i2s
 
     mcu.spi ~ microsd.spi
-    mcu.gpio[9] ~ microsd.spi_cs
+    mcu.gpio[4] ~ microsd.spi_cs
 
     # --- I2C pull-ups tied to MCU I2C directly ---
     mcu.i2c.sda.reference ~ power_3v3
@@ -75,7 +78,3 @@ module AIPin:
         r.package = "0402"
     mcu.i2c.sda.reference.hv ~> i2c_pullups[0] ~> mcu.i2c.sda.line
     mcu.i2c.scl.reference.hv ~> i2c_pullups[1] ~> mcu.i2c.scl.line
-
-    # --- Peripheral power ---
-    power_3v3 ~ mic.power
-    microsd.power ~ power_3v3
