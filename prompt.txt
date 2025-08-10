@@ -1,0 +1,7 @@
+Use atopile to build an AI pin PCBA. The AI pin consists of an ESP32-C3 microcontroller that has a microphone for listening to commands, and an external sd card for storing audio. The esp32 should be battery powered, with a charging circuit enabling charging over USB C. Connect the charger such that either the battery or the USB 5V bus can be the power source that goes through an LDO to regulate votlage to 3.1V to supply the esp32.
+
+Follow the conventions in @.cursor/rules/how_to_build_packages.mdc. Use the atopile MCP tools to find existing packages on the package registry, and use the atopile build tool to ensure the project has no compiler errors.
+
+When you are done, inspect the overall project for logical errors, missed connections, or systems that would not function as intended.
+
+Start by making an in depth plan in a file called 'plan.md' by gathering all information necessary such as finding which packages to use, and wait for further instruction before starting to write ato code. Refer back to this document before implementing each part of the design.
