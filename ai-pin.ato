@@ -1,2 +1,81 @@
+#pragma experiment("BRIDGE_CONNECT")
+#pragma experiment("FOR_LOOP")
+
+import ElectricPower
+import I2C
+import SPI
+import I2S
+import Resistor
+import ElectricLogic
+
+from "atopile/espressif-esp32-c3/esp32_c3_mini.ato" import ESP32_C3_MINI_1_driver
+from "atopile/usb-connectors/usb-connectors.ato" import USB2_0TypeCHorizontalConnector
+from "atopile/st-ldk220/st-ldk220.ato" import LDK220M_R
+from "atopile/microphones/tdk_invensense_ics_43434.ato" import TDK_InvenSense_ICS_43434
+from "atopile/ti-bq25185/ti-bq25185.ato" import BQ25185_driver
+from "atopile/sd-card/sd-card-slots.ato" import MicroSDCardAssemblyWithRemovableSPI
+from "atopile/batteries/eemb_battery_lp402535.ato" import EMB_BATTERY_LP402535_driver
+
 module AIPin:
-    pass
+    """
+    ESP32-C3 based AI pin with I2S microphone, USB-C power input, LiPo charger/power-path, and microSD over SPI. System rail ~3.3V.
+    """
+
+    # --- Power rails ---
+    power_vbus_5v = new ElectricPower
+    power_3v3 = new ElectricPower
+    power_batt = new ElectricPower
+    assert power_3v3.voltage within 2.97V to 3.15V
+
+    # --- Core components ---
+    mcu = new ESP32_C3_MINI_1_driver
+    usb_c = new USB2_0TypeCHorizontalConnector
+    ldo = new LDK220M_R
+
+    # --- Battery ---
+    battery = new EMB_BATTERY_LP402535_driver
+    battery.battery.model.capacity = 300mAh
+    assert battery.battery.model.voltage is 3V to 4.2V
+
+    # --- Battery charger ---
+    charger = new BQ25185_driver
+    charger.charge_current_limit = battery.battery.model.capacity / 2h +/- 10%
+    charger.battery_voltage_limit_high = 4.2V
+    charger.battery_voltage_limit_low = 3.0V
+
+    # --- Microphone (I2S) ---
+    mic = new TDK_InvenSense_ICS_43434
+
+    # --- microSD (SPI) ---
+    microsd = new MicroSDCardAssemblyWithRemovableSPI
+
+    # --- Power tree ---
+    power_vbus_5v ~ usb_c.usb.usb_if.buspower
+    power_vbus_5v ~ charger.power_vbus
+
+    power_batt ~ charger.power_batt
+    battery.power ~ power_batt
+
+    charger.power_sys ~> ldo ~> power_3v3
+
+    # --- MCU power and direct bus hookups ---
+    power_3v3 ~ mcu.power
+
+    mcu.i2s ~ mic.i2s
+
+    mcu.spi ~ microsd.spi
+    mcu.gpio[9] ~ microsd.spi_cs
+
+    # --- I2C pull-ups tied to MCU I2C directly ---
+    mcu.i2c.sda.reference ~ power_3v3
+    mcu.i2c.scl.reference ~ power_3v3
+    i2c_pullups = new Resistor[2]
+    for r in i2c_pullups:
+        r.resistance = 10kohm +/- 1%
+        r.package = "0402"
+    mcu.i2c.sda.reference.hv ~> i2c_pullups[0] ~> mcu.i2c.sda.line
+    mcu.i2c.scl.reference.hv ~> i2c_pullups[1] ~> mcu.i2c.scl.line
+
+    # --- Peripheral power ---
+    power_3v3 ~ mic.power
+    microsd.power ~ power_3v3
