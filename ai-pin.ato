@@ -66,6 +66,7 @@ module AIPin:
 
     # --- Comms connections ---
     mcu.i2s ~ mic.i2s
+    mcu.usb_if ~ usb_c.usb.usb_if
 
     mcu.spi ~ microsd.spi
     mcu.gpio[4] ~ microsd.spi_cs
