@@ -16,6 +16,8 @@ from "atopile/ti-bq25185/ti-bq25185.ato" import BQ25185_driver
 from "atopile/sd-card/sd-card-slots.ato" import MicroSDCardAssemblyWithRemovableSPI
 from "atopile/batteries/eemb_battery_lp402535.ato" import EMB_BATTERY_LP402535_driver
 from "atopile/logos/logos.ato" import atopile_logo_4x4mm
+from "atopile/indicator-leds/indicator-leds.ato" import LEDIndicatorRed
+from "atopile/opsco-sk6805-ec20/opsco-sk6805-ec20.ato" import OPSCO_SK6805_EC20
 
 module AIPin:
     """
@@ -43,6 +45,12 @@ module AIPin:
     charger.charge_current_limit = battery.model.capacity / 2h +/- 10%
     charger.battery_voltage_limit_high = 4.2V
     charger.battery_voltage_limit_low = 3.0V
+
+    # Temperature sensor - 10k ohm dummy resistor
+    temp_sensor = new Resistor
+    temp_sensor.resistance = 10kohm +/- 1%
+    temp_sensor.package = "0402"
+    charger.temperature_sense_manual_reset_control.line ~> temp_sensor ~> power_3v3.lv
 
     # --- Microphone (I2S) ---
     mic = new TDK_InvenSense_ICS_43434
@@ -81,4 +89,17 @@ module AIPin:
     mcu.i2c.sda.reference.hv ~> i2c_pullups[0] ~> mcu.i2c.sda.line
     mcu.i2c.scl.reference.hv ~> i2c_pullups[1] ~> mcu.i2c.scl.line
 
+    red_led = new LEDIndicatorRed
+    assert red_led.current within 0.5mA to 1.5mA
+    mcu.gpio[20].line ~> red_led ~> mcu.power.lv
+    
+    addressable_led = new OPSCO_SK6805_EC20
+    addressable_led.power ~ mcu.power
+    addressable_led.data_in ~ mcu.gpio[21]
+
     logo = new atopile_logo_4x4mm
+
+    microsd.receptacle.receptacle.sdbus.CD_DAT3.override_net_name = "sd_chip_select_1"
+    microsd.receptacle.receptacle.sdbus.CMD.override_net_name = "sd_mosi"
+    microsd.receptacle.receptacle.sdbus.CLK.override_net_name = "sd_clk"
+    microsd.receptacle.receptacle.sdbus.DAT0.override_net_name = "sd_miso"

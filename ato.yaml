@@ -50,3 +50,9 @@ dependencies:
 - type: file
   identifier: atopile/logos
   path: logos
+- type: registry
+  identifier: atopile/indicator-leds
+  release: 0.1.4
+- type: registry
+  identifier: atopile/opsco-sk6805-ec20
+  release: 0.3.0
