@@ -1,5 +1,7 @@
 ## AI Pin — Your private, wearable memory
 
+<img src="front_render.png" alt="AI Pin front render" width="400"/>
+
 **Stop forgetting what matters.** AI Pin is a privacy‑first wearable that captures your conversations throughout the day, then—when you’re home—offloads to your own local server to transcribe and make everything searchable. Ask, “What did I promise Alex yesterday?” or “What did I get done today?” and get instant answers from your own life.
 
 ### Why this is different
