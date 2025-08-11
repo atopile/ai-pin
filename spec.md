@@ -142,6 +142,40 @@
 - Provide a `docker-compose.yml` that brings up: API (FastAPI/Express), MinIO, Postgres (+pgvector), Redis, and a Whisper worker (GPU‑accelerated if available; CPU fallback)
 - mDNS for local discovery; device posts to `https://ai-pin.local` (configurable)
 
+### Agents & Private History
+
+Local agents can query transcripts to answer questions and automate tasks without leaving your machine.
+
+#### Retrieval model
+
+- Hybrid search: BM25 + vector with reciprocal rank fusion; time and device filters
+- Chunking: sentence or ~512‑token windows with overlap; store timestamps per chunk
+- Embeddings: local model (e.g., `bge-small-en`) stored in pgvector; optional Qdrant/Milvus at scale
+
+#### Agent sessions & scopes
+
+- Session object defines time window, people/topics (optional), device/user scope, and privacy level
+- Responses include citations (file key, start/end timestamps) for traceability
+- Redaction profile can be applied per session before returning text to agents
+
+#### Agent API (planned)
+
+- `GET /v1/search` – hybrid search over transcripts with filters and `top_k`
+- `POST /v1/agents/query` – returns stitched context windows for LLMs plus citations
+- `POST /v1/agents/sessions` – create session with scope and redaction policy; returns `session_id`
+
+#### Data model additions (planned)
+
+- `agent_sessions(id, user_id, created_at, scope_json, redaction_profile)`
+- `search_logs(id, session_id?, query, filters_json, top_k, latency_ms, created_at)`
+
+#### Privacy & security defaults
+
+- Bind API to loopback or LAN; no egress by default
+- PAT or mTLS for agent clients; per‑user isolation
+- Optional PII redaction before indexing and/or at query time
+- Retention policies and deletion propagate to vector store and MinIO
+
 ---
 
 ## Data Model (sketch)

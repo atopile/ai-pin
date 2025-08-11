@@ -45,6 +45,32 @@ graph TD
   API --> DB
 ```
 
+### Processing flow (upload → answer)
+
+```mermaid
+sequenceDiagram
+    participant Dev as Device
+    participant API as Ingestion API
+    participant S3 as MinIO
+    participant Q as Redis Queue
+    participant W as Whisper Worker
+    participant DB as Postgres/pgvector
+
+    Dev->>API: POST /v1/upload (WAV)
+    API->>S3: putObject(wav)
+    API->>Q: enqueue({ key, device_id })
+    W-->>Q: blpop()
+    Q-->>W: { key, device_id }
+    W->>S3: getObject(wav)
+    W->>W: transcribe (Whisper)
+    W->>S3: putObject(txt/json)
+    W->>DB: upsert chunks + embeddings
+    Note over W,DB: hybrid index: BM25 + vector
+    UI->>API: /v1/search?q=...&time=...
+    API->>DB: retrieve + rank
+    API-->>UI: results/snippets
+```
+
 ### Hardware (designed in code)
 
 - MCU: ESP32‑C3 Mini‑1 (`I2S`, `SPI`, `Wi‑Fi`)
@@ -69,6 +95,35 @@ See `ai-pin.ato` for the complete, declarative hardware design.
 - Database (Postgres + pgvector)
 - Queue (Redis)
 - Transcription worker (Whisper via `faster-whisper`)
+
+---
+
+## Agents and your private history
+
+You can point a local agent at your private transcripts to answer questions and automate tasks—without sending data to the cloud.
+
+- **Local‑only by default**: Retrieval happens against your local DB/object store. No outbound calls unless you enable them.
+- **Hybrid retrieval**: BM25 + vector search with time filters and device/user scoping.
+- **Defensive prompts**: The API returns citations and timestamps; agents are encouraged to include them in answers.
+
+Planned Agent API (local):
+
+- `GET /v1/search` – hybrid search over transcripts
+- `POST /v1/agents/query` – higher‑level query that returns stitched context windows for LLMs
+- `POST /v1/agents/sessions` – create a scoped session with time/person/topic constraints
+
+Example (planned) search call:
+
+```bash
+curl "http://localhost:8080/v1/search?q=what+did+I+promise+Alex&from=2025-01-01&to=2025-01-31&top_k=10"
+```
+
+Privacy boundaries:
+
+- Local network only; bind to loopback or LAN per your `.env`.
+- API tokens for agent clients; optional mTLS.
+- Audit log of queries; per‑user/device scoping.
+- Optional redaction layer (emails, credit cards) before indexing.
 
 ---
 
@@ -128,15 +183,43 @@ The worker will pick it up, transcribe, and write a `.txt` next to the `.wav` in
 
 ## Developing the firmware (ESP32‑C3 + Zephyr)
 
+See detailed instructions in `firmware/zephyr/README.md`. Quickstart:
+
+Prereqs (one‑time):
+
 ```bash
-west build -b esp32c3_devkitm firmware/zephyr/app -p always
+/opt/homebrew/bin/python3 -m venv "$HOME/zephyr-venv"
+source "$HOME/zephyr-venv/bin/activate"
+pip install -U pip west
+cd "$HOME/zephyrproject"
+export ZEPHYR_SDK_INSTALL_DIR="$HOME/zephyr-sdk-0.17.2"
+export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+west zephyr-export
+```
+
+Build & flash:
+
+```bash
+source "$HOME/zephyr-venv/bin/activate"
+cd "$HOME/zephyrproject"
+west build -b esp32c3_devkitm $(pwd -P)/../projects/ai-pin/firmware/zephyr/app -p always -- \
+  -DDTC_OVERLAY_FILE=boards/esp32c3_devkitm.overlay \
+  -DPython3_EXECUTABLE="$HOME/zephyr-venv/bin/python" -DWEST_PYTHON="$HOME/zephyr-venv/bin/python"
 west flash
 ```
 
-Notes:
+Provision Wi‑Fi on SD card (root):
 
-- `prj.conf` enables I2S, SPI, FATFS, Wi‑Fi, Logging, Settings.
-- Board overlay maps I2S mic, SPI microSD (CS GPIO4), LED, and button.
+```ini
+ssid=YOUR_SSID
+psk=YOUR_PASSWORD
+```
+
+Troubleshooting highlights:
+
+- Missing blobs for ESP32: `west blobs fetch hal_espressif`
+- I2S DMA error: ensure overlay enables `&dma { status = "okay"; }` and `&i2s { dmas = <&dma 0>, <&dma 1>; }`, and `CONFIG_DMA=y` in `prj.conf`
+- CMake can’t find west: pass venv python flags shown above
 
 ---
 
