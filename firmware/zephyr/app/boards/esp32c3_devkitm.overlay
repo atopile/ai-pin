@@ -1,0 +1,28 @@
+/ {
+    aliases {
+        spi-sd = &spi2;
+    };
+};
+
+&spi2 {
+    status = "okay";
+    cs-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>; // microSD CS on GPIO4 per ai-pin.ato
+
+    sdcard: spi-slot@0 {
+        compatible = "zephyr,sdhc-spi-slot";
+        reg = <0>;
+        spi-max-frequency = <24000000>;
+        status = "okay";
+        mmc {
+            compatible = "zephyr,sdmmc-disk";
+            disk-name = "SD";
+            status = "okay";
+        };
+    };
+};
+
+&i2s {
+    status = "okay";
+};
+
+

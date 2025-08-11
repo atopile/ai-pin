@@ -1,0 +1,6 @@
+# Wi‑Fi credentials for AI Pin firmware
+# Copy this file to the SD card root and rename to "wifi.txt".
+# Only the two lines below are required. Avoid other "=" on lines.
+
+ssid=YOUR_WIFI_SSID
+psk=YOUR_WIFI_PASSWORD
