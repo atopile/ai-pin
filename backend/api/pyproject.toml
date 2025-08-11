@@ -1,0 +1,21 @@
+[project]
+name = "aipin-api"
+version = "0.1.0"
+description = "Local-first API for AI Pin"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi>=0.111.0",
+  "uvicorn[standard]>=0.29.0",
+  "minio>=7.2.7",
+  "redis>=5.0.0",
+  "pydantic>=2.7.0",
+]
+
+[project.scripts]
+aipin-api = "app.main:app"
+
+[tool.uvicorn]
+host = "0.0.0.0"
+port = 8080
+
+

@@ -1,0 +1,27 @@
+/ {
+    aliases {
+        spi-sd = &spi2;
+    };
+};
+
+&spi2 {
+    status = "okay";
+    cs-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>; // microSD CS on GPIO4 per ai-pin.ato
+    /* Adjust these pins to match your actual board routing */
+    /* mosi: IO7, miso: IO2, sclk: IO6 (example) */
+
+    sdcard: spi-slot@0 {
+        compatible = "zephyr,sdmmc-disk-spi";
+        reg = <0>;
+        spi-max-frequency = <24000000>;
+        status = "okay";
+        label = "SD";
+    };
+};
+
+&i2s0 {
+    status = "okay";
+    /* Configure pinctrl for your ICS-43434 I2S mic here */
+};
+
+

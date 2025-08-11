@@ -1,0 +1,11 @@
+fastapi==0.116.1
+starlette==0.47.2
+uvicorn[standard]==0.35.0
+minio==7.2.16
+redis==6.4.0
+pydantic==2.11.4
+pydantic-core==2.33.2
+pydantic-settings==2.10.1
+python-multipart==0.0.20
+typing-extensions==4.14.1
+
