@@ -4,14 +4,30 @@ This directory will contain the Zephyr application for the AI Pin firmware.
 
 Quickstart
 
-- Ensure you have Zephyr SDK and west installed.
-- Initialize a Zephyr workspace (or add this app to an existing one).
-- Configure board overlays for ESP32‑C3 and build/flash.
+- Ensure you have a Zephyr workspace (e.g., `~/zephyrproject`) and Zephyr SDK installed (e.g., `~/zephyr-sdk-0.17.2`).
+- This app targets ESP32‑C3 DevKitM and uses a device‑tree overlay to enable I2S and SPI SD (CS on GPIO4).
+
+Environment setup (recommended once)
+
+```
+# Create/use a Python venv for west/cmake integration
+/opt/homebrew/bin/python3 -m venv "$HOME/zephyr-venv"
+source "$HOME/zephyr-venv/bin/activate"
+pip install -U pip west
+
+# Use your Zephyr workspace and SDK
+cd "$HOME/zephyrproject"
+export ZEPHYR_SDK_INSTALL_DIR="$HOME/zephyr-sdk-0.17.2"
+export ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+west zephyr-export
+```
 
 Build
 
 ```
-west build -b esp32c3_devkitm /Users/narayanpowderly/projects/ai-pin/firmware/zephyr/app -p always -- \\
+source "$HOME/zephyr-venv/bin/activate"
+cd "$HOME/zephyrproject"
+west build -b esp32c3_devkitm /Users/narayanpowderly/projects/ai-pin/firmware/zephyr/app -p always -- \
   -DDTC_OVERLAY_FILE=boards/esp32c3_devkitm.overlay
 ```
 
@@ -23,9 +39,32 @@ west flash
 
 Notes
 
-- `prj.conf` enables I2S, SPI, FATFS, Wi‑Fi, Logging, and Settings.
-- `boards/esp32c3_devkitm.overlay` maps SPI microSD CS to GPIO4 and enables I2S. Adjust pinctrl to your board.
-- Wi‑Fi provisioning: place a `wifi.txt` file on the SD card root with the content:
+- `prj.conf` enables I2S, SPI, FATFS, Wi‑Fi, Logging, and Settings. DMA is enabled for I2S.
+- `boards/esp32c3_devkitm.overlay` maps SPI microSD CS to GPIO4 and enables I2S (`&i2s`). Update MOSI/MISO/SCLK to match your board.
+- Wi‑Fi provisioning: copy `firmware/zephyr/wifi.txt.example` to the SD card root and rename to `wifi.txt`:
   - `ssid=YourNetwork`
   - `psk=YourPassword`
-    The firmware will read `/SD:/wifi.txt` at boot and attempt to connect.
+    The firmware reads `/SD:/wifi.txt` at boot and attempts to connect.
+
+Troubleshooting
+
+- If build fails to find west from CMake: pass the venv python
+  - Add to the build command tail: `-DPython3_EXECUTABLE="$HOME/zephyr-venv/bin/python" -DWEST_PYTHON="$HOME/zephyr-venv/bin/python"`
+- If blobs missing for ESP32: run `west blobs fetch hal_espressif` in `~/zephyrproject`.
+- If you see "DMA peripheral is not enabled!" from I2S: ensure `CONFIG_DMA=y` and `CONFIG_DMA_ESP32=y` are set in `prj.conf`.
+- For FatFS volume errors: use `zephyr,sdhc-spi-slot` with `mmc { compatible = "zephyr,sdmmc-disk"; }` in the overlay. Avoid hard‑coding `FS_FATFS_VOLUME_STRS` in `prj.conf`.
+
+Run & monitor
+
+- UART 115200‑8‑N‑1. Example: `screen /dev/tty.usbserial* 115200`
+- Expected boot logs:
+  - `AI Pin firmware (Zephyr) booting`
+  - SD: `Mounted FAT at /SD:` (when card present)
+  - Wi‑Fi: `Read Wi‑Fi credentials ...` then `Got IPv4 address`
+
+Testing checklist (abridged)
+
+- Build & flash: no immediate errors on boot
+- Audio: no persistent I2S errors; ring overflows rare at idle
+- Storage: `.wav` files in SD root; valid PCM S16LE @ 16kHz; rotation works
+- Wi‑Fi: connects using `/SD:/wifi.txt` and obtains IPv4 address
