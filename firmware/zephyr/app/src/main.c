@@ -12,13 +12,13 @@ LOG_MODULE_REGISTER(ai_pin, LOG_LEVEL_INF);
 
 static void start_workers(void)
 {
-    storage_init();
-    audio_init();
-    net_init();
+    // storage_init();
+    // audio_init();
+    // net_init();
     ui_init();
 
-    storage_start();
-    audio_start();
+    // storage_start();
+    // audio_start();
 }
 
 int main(void)

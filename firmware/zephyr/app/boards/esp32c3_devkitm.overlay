@@ -1,3 +1,4 @@
+
 / {
     chosen {
         zephyr,console = &usb_serial;
@@ -39,7 +40,6 @@
 /* GPIO20 used for red indicator LED, GPIO21 used for WS2812 data */
 &gpio0 {
     status = "okay";
-    /* No DT child needed for simple GPIO control via drivers/gpio */
 };
 
 &pinctrl {
@@ -54,5 +54,3 @@
         };
     };
 };
-
-

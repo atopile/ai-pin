@@ -40,28 +40,20 @@ void ui_tick(void)
     if (now >= next_toggle)
     {
         led_on = !led_on;
-        next_toggle = now + 500; // 1 Hz blink (toggle every 500 ms)
+        next_toggle = now + 100; // 10 Hz blink (toggle every 100 ms) for faster scope analysis
 
         if (ui_gpio_dev)
         {
             gpio_pin_set(ui_gpio_dev, UI_LED_GPIO_PIN, led_on ? 1 : 0);
         }
 
-        // Addressable LED indicates system state
-        // - Solid blue when SD mounted, not yet Wi‑Fi connected
-        // - Solid green when Wi‑Fi connected
-        // - Off otherwise
-        if (net_is_wifi_connected())
-        {
-            ws2812_set_rgb(0, 32, 0);
+        /* Simple alternating pattern for scope analysis */
+        static bool color_state = false;
+        if (color_state) {
+            ws2812_set_rgb(170, 0, 0); /* 0xAA = 10101010 pattern in red channel */
+        } else {
+            ws2812_set_rgb(85, 0, 0);  /* 0x55 = 01010101 pattern in red channel */
         }
-        else if (storage_is_mounted())
-        {
-            ws2812_set_rgb(0, 0, 32);
-        }
-        else
-        {
-            ws2812_off();
-        }
+        color_state = !color_state;
     }
 }

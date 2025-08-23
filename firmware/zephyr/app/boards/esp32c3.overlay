@@ -1,27 +1,56 @@
+
 / {
+    chosen {
+        zephyr,console = &usb_serial;
+        zephyr,uart-mcumgr = &usb_serial;
+    };
     aliases {
         spi-sd = &spi2;
+        status-led0 = &gpio0;
     };
 };
 
 &spi2 {
     status = "okay";
+    pinctrl-0 = <&spim2_ai_default>;
+    pinctrl-names = "default";
     cs-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>; // microSD CS on GPIO4 per ai-pin.ato
-    /* Adjust these pins to match your actual board routing */
-    /* mosi: IO7, miso: IO2, sclk: IO6 (example) */
 
     sdcard: spi-slot@0 {
-        compatible = "zephyr,sdmmc-disk-spi";
+        compatible = "zephyr,sdhc-spi-slot";
         reg = <0>;
-        spi-max-frequency = <24000000>;
+        spi-max-frequency = <4000000>;
         status = "okay";
-        label = "SD";
+        mmc {
+            compatible = "zephyr,sdmmc-disk";
+            disk-name = "SD";
+            status = "okay";
+        };
     };
 };
 
-&i2s0 {
-    status = "okay";
-    /* Configure pinctrl for your ICS-43434 I2S mic here */
+&i2s {
+    status = "disabled";
 };
 
+&dma {
+    status = "okay";
+};
 
+/* GPIO20 used for red indicator LED, GPIO21 used for WS2812 data */
+&gpio0 {
+    status = "okay";
+};
+
+&pinctrl {
+    spim2_ai_default: spim2_ai_default {
+        group1 {
+            pinmux = <SPIM2_MISO_GPIO8>,
+                     <SPIM2_SCLK_GPIO10>;
+        };
+        group2 {
+            pinmux = <SPIM2_MOSI_GPIO7>;
+            output-low;
+        };
+    };
+};
