@@ -104,12 +104,21 @@ static int wav_finalize(struct fs_file_t *file)
     return 0;
 }
 
+static volatile bool g_mounted = false;
+
+bool storage_is_mounted(void)
+{
+    return g_mounted;
+}
+
 static int ensure_mount(void)
 {
     static bool mounted = false;
     if (mounted)
         return 0;
 
+    // Allow card power-up settle
+    k_sleep(K_MSEC(200));
     int rc = disk_access_init("SD");
     if (rc)
     {
@@ -122,6 +131,7 @@ static int ensure_mount(void)
     {
         LOG_INF("Mounted FAT at %s", mount_point);
         mounted = true;
+        g_mounted = true;
     }
     else if (rc == -ENODEV)
     {

@@ -23,6 +23,10 @@ static struct net_mgmt_event_callback wifi_cb;
 static struct net_if *wifi_iface;
 
 static volatile bool wifi_connected = false;
+bool net_is_wifi_connected(void)
+{
+    return wifi_connected;
+}
 
 static void wifi_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event, struct net_if *iface)
 {

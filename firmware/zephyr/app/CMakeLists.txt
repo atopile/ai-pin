@@ -10,5 +10,6 @@ target_sources(app PRIVATE
   src/storage.c
   src/net.c
   src/ui.c
+  src/ws2812.c
 )
 

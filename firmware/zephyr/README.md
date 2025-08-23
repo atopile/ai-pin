@@ -68,3 +68,68 @@ Testing checklist (abridged)
 - Audio: no persistent I2S errors; ring overflows rare at idle
 - Storage: `.wav` files in SD root; valid PCM S16LE @ 16kHz; rotation works
 - Wi‑Fi: connects using `/SD:/wifi.txt` and obtains IPv4 address
+
+## Monitoring serial output
+
+Use one of the following options to view logs at 115200 baud.
+
+Option A: west monitor (recommended if west is in your venv PATH)
+
+```
+source "$HOME/zephyr-venv/bin/activate"
+cd "$HOME/zephyrproject"
+west espressif monitor -p /dev/cu.usbmodem1101 -b 115200
+# Quit with: Ctrl-]
+```
+
+Option B: Python miniterm (no west required)
+
+```
+python -m serial.tools.miniterm /dev/cu.usbmodem1101 115200
+# Quit with: Ctrl-]
+```
+
+Option C: screen (preinstalled on macOS)
+
+```
+screen /dev/cu.usbmodem1101 115200
+# Quit with: Ctrl-A then K, then Y
+```
+
+## Troubleshooting serial
+
+- If you see only ROM boot messages and no Zephyr logs, the port may be reset into bootloader. Try another app that does not toggle DTR/RTS, such as miniterm or screen.
+- If `west` is not found, ensure your venv is active: `source "$HOME/zephyr-venv/bin/activate"` and that west is installed: `pip install -U west` then `west --version`.
+- To list ports: `ls /dev/cu.*` and pick the `usbmodem` (ESP32-C3 USB CDC) device.
+
+## Expected boot logs
+
+- `AI Pin firmware (Zephyr) booting`
+- `Mounted FAT at /SD:` once the SD card is detected
+- `Read Wi‑Fi credentials ...` then `Got IPv4 address` on successful Wi‑Fi
+
+## Pinout (current build)
+
+Note: Console is routed to on‑chip USB CDC; I2S is currently disabled to avoid SPI2 pin conflicts.
+
+| Function                        | GPIO    | Notes                            |
+| ------------------------------- | ------- | -------------------------------- |
+| LED (red)                       | 20      | Active‑high heartbeat            |
+| Addressable LED (SK6805/WS2812) | 21      | Data‑in                          |
+| SPI2 SCLK                       | 6       | Board `spim2_default`            |
+| SPI2 MOSI                       | 7       | Board `spim2_default`            |
+| SPI2 MISO                       | 2       | Board `spim2_default`            |
+| microSD CS                      | 4       | Active‑low (overlay `cs-gpios`)  |
+| Console                         | USB CDC | `&usb_serial` (no external pins) |
+
+## I2S mapping (disabled)
+
+If I2S is enabled on this board configuration, pins map as:
+
+- I2S MCLK: GPIO6
+- I2S WS/LRCLK: GPIO5
+- I2S BCLK: GPIO4
+- I2S SD Out (to DAC): GPIO18
+- I2S SD In (from mic): GPIO19
+
+Conflict note: I2S BCLK on GPIO4 conflicts with the SD CS on GPIO4, and MCLK on GPIO6 conflicts with SPI2 SCLK on GPIO6. That’s why I2S is disabled in the current overlay.

@@ -1,17 +1,24 @@
 / {
+    chosen {
+        zephyr,console = &usb_serial;
+        zephyr,uart-mcumgr = &usb_serial;
+    };
     aliases {
         spi-sd = &spi2;
+        status-led0 = &gpio0;
     };
 };
 
 &spi2 {
     status = "okay";
+    pinctrl-0 = <&spim2_ai_default>;
+    pinctrl-names = "default";
     cs-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>; // microSD CS on GPIO4 per ai-pin.ato
 
     sdcard: spi-slot@0 {
         compatible = "zephyr,sdhc-spi-slot";
         reg = <0>;
-        spi-max-frequency = <24000000>;
+        spi-max-frequency = <4000000>;
         status = "okay";
         mmc {
             compatible = "zephyr,sdmmc-disk";
@@ -22,13 +29,30 @@
 };
 
 &i2s {
-    status = "okay";
-    dmas = <&dma 0>, <&dma 1>;
-    dma-names = "rx", "tx";
+    status = "disabled";
 };
 
 &dma {
     status = "okay";
+};
+
+/* GPIO20 used for red indicator LED, GPIO21 used for WS2812 data */
+&gpio0 {
+    status = "okay";
+    /* No DT child needed for simple GPIO control via drivers/gpio */
+};
+
+&pinctrl {
+    spim2_ai_default: spim2_ai_default {
+        group1 {
+            pinmux = <SPIM2_MISO_GPIO8>,
+                     <SPIM2_SCLK_GPIO10>;
+        };
+        group2 {
+            pinmux = <SPIM2_MOSI_GPIO7>;
+            output-low;
+        };
+    };
 };
 
 

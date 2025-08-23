@@ -13,3 +13,6 @@ void storage_set_segment_duration(uint32_t seconds);
 // Simple API to signal start/stop of recording
 void storage_begin_recording(void);
 void storage_end_recording(void);
+
+// Status helpers
+bool storage_is_mounted(void);
