@@ -27,7 +27,7 @@ Build
 ```
 source "$HOME/zephyr-venv/bin/activate"
 cd "$HOME/zephyrproject"
-west build -b esp32c3_devkitm /Users/narayanpowderly/projects/ai-pin/firmware/zephyr/app -p always -- \
+west build -b esp32c3_devkitm /Users/nicholaskrstevski/github/ai_pin/firmware/zephyr/app -p always -- \
   -DDTC_OVERLAY_FILE=boards/esp32c3_devkitm.overlay
 ```
 

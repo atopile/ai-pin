@@ -7,8 +7,6 @@ zephyr_include_directories(include)
 target_sources(app PRIVATE
   src/main.c
   src/audio.c
-  src/storage.c
-  src/net.c
   src/ui.c
   src/ws2812.c
 )

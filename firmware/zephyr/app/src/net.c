@@ -150,7 +150,7 @@ static void wifi_thread(void *p1, void *p2, void *p3)
     char psk[64] = {0};
     while (read_wifi_txt(ssid, sizeof(ssid), psk, sizeof(psk)) < 0)
     {
-        k_sleep(K_SECONDS(2));
+        k_sleep(K_SECONDS(1));
     }
     LOG_INF("Read Wi‑Fi credentials for SSID='%s'", ssid);
 
@@ -162,7 +162,7 @@ static void wifi_thread(void *p1, void *p2, void *p3)
     }
 
     // Wait until we are connected (got IPv4) or timeout
-    int64_t deadline = k_uptime_get() + 20000; // 20s
+    int64_t deadline = k_uptime_get() + 2000; // 2s
     while (!wifi_connected && k_uptime_get() < deadline)
     {
         k_sleep(K_MSEC(200));

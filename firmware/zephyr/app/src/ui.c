@@ -50,9 +50,9 @@ void ui_tick(void)
         /* Simple alternating pattern for scope analysis */
         static bool color_state = false;
         if (color_state) {
-            ws2812_set_rgb(170, 0, 0); /* 0xAA = 10101010 pattern in red channel */
+            ws2812_set_rgb(0, 0, 255);
         } else {
-            ws2812_set_rgb(85, 0, 0);  /* 0x55 = 01010101 pattern in red channel */
+            ws2812_set_rgb(0, 255, 0);
         }
         color_state = !color_state;
     }

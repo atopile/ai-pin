@@ -2,6 +2,7 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/time_units.h>
+#include <zephyr/irq.h>
 
 #include "ws2812.h"
 
@@ -13,32 +14,37 @@ LOG_MODULE_REGISTER(ws2812, LOG_LEVEL_INF);
 
 static const struct device *gpio_dev = DEVICE_DT_GET(DT_NODELABEL(gpio0));
 
+// T1H 1 code ,high voltage time 0.8us ±150ns
+// T1L 1 code ,low voltage time 0.45us ±150ns
+// T0H 0 code ,high voltage time 0.4us ±150ns
+// T0L 0 code , low voltage time 0.85us ±150ns
+
+static inline void ws2812_nops(uint32_t n)
+{
+    for (volatile uint32_t i = 0; i < n; ++i)
+    {
+        __asm__ volatile ("nop");
+    }
+}
+
 static void ws2812_write_byte(uint8_t b)
 {
-    /* WS2812 timing for ESP32-C3 at 16MHz:
-       Each cycle = 62.5ns
-       T0H: 0.4us = ~6.4 cycles, T0L: 0.85us = ~13.6 cycles  
-       T1H: 0.8us = ~12.8 cycles, T1L: 0.45us = ~7.2 cycles
-       
-       Since we can't do fractional NOPs, use minimal counts */
     for (int i = 7; i >= 0; --i)
     {
         bool bit = (b >> i) & 1;
         gpio_pin_set_raw(gpio_dev, WS2812_GPIO_PIN, 1);
-        
-        if (bit) {
-            /* T1H: target 0.8us - need ~13 cycles, use more NOPs */
-            __asm__ volatile ("nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;");
+
+        if (bit)
+        {
+            ws2812_nops(7);
             gpio_pin_set_raw(gpio_dev, WS2812_GPIO_PIN, 0);
-            /* T1L: target 0.45us - need ~7 cycles */
-            __asm__ volatile ("nop; nop; nop; nop; nop;");
-        } else {
-            /* T0H: target 0.4us - need ~6 cycles */
-            __asm__ volatile ("nop; nop; nop; nop;");
+            ws2812_nops(3);
+        }
+        else
+        {
+            ws2812_nops(2);
             gpio_pin_set_raw(gpio_dev, WS2812_GPIO_PIN, 0);
-            /* T0L: target 0.85us - need ~14 cycles */
-            __asm__ volatile ("nop; nop; nop; nop; nop; nop; nop; nop; nop; nop;");
-            __asm__ volatile ("nop; nop;");
+            ws2812_nops(8);
         }
     }
 }
@@ -81,9 +87,7 @@ void ws2812_set_rgb(uint8_t r, uint8_t g, uint8_t b)
 {
     if (!device_is_ready(gpio_dev))
         return;
-    
-    LOG_INF("Setting WS2812 RGB: R=%d, G=%d, B=%d (sending GRB: %d, %d, %d)", r, g, b, g, r, b);
-    
+
     /* WS2812 expects GRB order */
     unsigned int key = irq_lock();
     ws2812_write_byte(g);
@@ -91,10 +95,8 @@ void ws2812_set_rgb(uint8_t r, uint8_t g, uint8_t b)
     ws2812_write_byte(b);
     /* Reset: hold low for >50us */
     gpio_pin_set_raw(gpio_dev, WS2812_GPIO_PIN, 0);
-    k_busy_wait(80); /* Extended reset time */
+    k_busy_wait(80);
     irq_unlock(key);
-    
-    LOG_INF("WS2812 data sent, reset completed");
 }
 
 void ws2812_off(void)
